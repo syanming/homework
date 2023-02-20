@@ -1,0 +1,193 @@
+查询"01"课程比"02"课程成绩高的学生的信息及课程分数
+0: jdbc:hive2://bigdata03:10000> select s.*,t.score from student s, (select s_id, max(s_score) score from score where c_id in (01,02) group by s_id) t where s.s_id= t.s_id;
++---------+-----------+-------------+----------+----------+
+| s.s_id  | s.s_name  |  s.s_birth  | s.s_sex  | t.score  |
++---------+-----------+-------------+----------+----------+
+| 01      | 赵雷        | 1990-01-01  | 男        | 90       |
+| 02      | 钱电        | 1990-12-21  | 男        | 70       |
+| 03      | 孙风        | 1990-05-20  | 男        | 80       |
+| 04      | 李云        | 1990-08-06  | 男        | 50       |
+| 05      | 周梅        | 1991-12-01  | 女        | 87       |
+| 06      | 吴兰        | 1992-03-01  | 女        | 31       |
+| 07      | 郑竹        | 1989-07-01  | 女        | 89       |
+| 09      | 张飞        | 1990-9-25   | 男        | 85       |
+| 10      | 刘备        | 1990-01-25  | 男        | 80       |
++---------+-----------+-------------+----------+----------+
+查询"01"课程比"02"课程成绩低的学生的信息及课程分数
+0: jdbc:hive2://bigdata03:10000> select s.*,t.score from student s, (select s_id, min(s_score) score from score where c_id in (01,02) group by s_id) t where s.s_id= t.s_id;
++---------+-----------+-------------+----------+----------+
+| s.s_id  | s.s_name  |  s.s_birth  | s.s_sex  | t.score  |
++---------+-----------+-------------+----------+----------+
+| 01      | 赵雷        | 1990-01-01  | 男        | 80       |
+| 02      | 钱电        | 1990-12-21  | 男        | 60       |
+| 03      | 孙风        | 1990-05-20  | 男        | 80       |
+| 04      | 李云        | 1990-08-06  | 男        | 30       |
+| 05      | 周梅        | 1991-12-01  | 女        | 76       |
+| 06      | 吴兰        | 1992-03-01  | 女        | 31       |
+| 07      | 郑竹        | 1989-07-01  | 女        | 89       |
+| 09      | 张飞        | 1990-9-25   | 男        | 80       |
+| 10      | 刘备        | 1990-01-25  | 男        | 56       |
++---------+-----------+-------------+----------+----------+
+查询平均成绩大于等于 60 分的同学的学生编号和学生姓名和平均成绩
+0: jdbc:hive2://bigdata03:10000> select s.s_id, s.s_name,t.score from student s, (select s_id, avg(s_score) score from score group by s_id) t where s.s_id= t.s_id and t.score >= 60;
++---------+-----------+--------------------+
+| s.s_id  | s.s_name  |      t.score       |
++---------+-----------+--------------------+
+| 01      | 赵雷        | 89.66666666666667  |
+| 02      | 钱电        | 70.0               |
+| 03      | 孙风        | 80.0               |
+| 05      | 周梅        | 81.5               |
+| 07      | 郑竹        | 93.5               |
+| 09      | 张飞        | 88.0               |
+| 10      | 刘备        | 64.0               |
+| 11      | 关羽        | 90.0               |
++---------+-----------+--------------------+
+查询平均成绩小于 60 分的同学的学生编号和学生姓名和平均成绩 (包括有成绩的和无成绩的)
+0: jdbc:hive2://bigdata03:10000> select s.s_id, s.s_name,t.score from student s LEFT JOIN (select s_id, avg(s_score) score from score group by s_id) t on s.s_id= t.s_id and t.score < 60;
++---------+-----------+---------------------+
+| s.s_id  | s.s_name  |       t.score       |
++---------+-----------+---------------------+
+| 01      | 赵雷        | NULL                |
+| 02      | 钱电        | NULL                |
+| 03      | 孙风        | NULL                |
+| 04      | 李云        | 33.333333333333336  |
+| 05      | 周梅        | NULL                |
+| 06      | 吴兰        | 32.5                |
+| 07      | 郑竹        | NULL                |
+| 08      | 王菊        | NULL                |
+| 09      | 张飞        | NULL                |
+| 10      | 刘备        | NULL                |
+| 11      | 关羽        | NULL                |
++---------+-----------+---------------------+
+查询所有同学的学生编号、学生姓名、选课总数、所有课程的总成绩
+0: jdbc:hive2://bigdata03:10000> select st.s_id, st.s_name, t.count, t.sumscore from student st, (select s_id sid, count(c_id) count, sum(s_score) sumscore from score group by s_id) t where
+st.s_id = t.sid;
++----------+------------+----------+-------------+
+| st.s_id  | st.s_name  | t.count  | t.sumscore  |
++----------+------------+----------+-------------+
+| 01       | 赵雷         | 3        | 269         |
+| 02       | 钱电         | 3        | 210         |
+| 03       | 孙风         | 3        | 240         |
+| 04       | 李云         | 3        | 100         |
+| 05       | 周梅         | 2        | 163         |
+| 06       | 吴兰         | 2        | 65          |
+| 07       | 郑竹         | 2        | 187         |
+| 09       | 张飞         | 3        | 264         |
+| 10       | 刘备         | 4        | 256         |
+| 11       | 关羽         | 1        | 90          |
++----------+------------+----------+-------------+
+查询"李"姓老师的数量
+0: jdbc:hive2://bigdata03:10000> select count(1) from teacher th where th.t_name like '%李%';
++------+
+| _c0  |
++------+
+| 1    |
++------+
+查询学过"张三"老师授课的同学的信息
+0: jdbc:hive2://bigdata03:10000> select * from student  where s_id in(select distinct s_id from score where c_id in (select distinct cr.c_id from course cr, (select th.t_id tid from teacher th where th.t_name ='张三') t where cr.t_id = t.tid));
++---------------+-----------------+------------------+----------------+
+| student.s_id  | student.s_name  | student.s_birth  | student.s_sex  |
++---------------+-----------------+------------------+----------------+
+| 01            | 赵雷              | 1990-01-01       | 男              |
+| 02            | 钱电              | 1990-12-21       | 男              |
+| 03            | 孙风              | 1990-05-20       | 男              |
+| 04            | 李云              | 1990-08-06       | 男              |
+| 05            | 周梅              | 1991-12-01       | 女              |
+| 07            | 郑竹              | 1989-07-01       | 女              |
+| 09            | 张飞              | 1990-9-25        | 男              |
+| 10            | 刘备              | 1990-01-25       | 男              |
++---------------+-----------------+------------------+----------------+
+查询没学过"张三"老师授课的同学的信息
+0: jdbc:hive2://bigdata03:10000> select * from student  where s_id not in(select distinct s_id from score where c_id in (select distinct cr.c_id from course cr, (select th.t_id tid from teacher th where th.t_name ='张三') t where cr.t_id = t.tid));
++---------------+-----------------+------------------+----------------+
+| student.s_id  | student.s_name  | student.s_birth  | student.s_sex  |
++---------------+-----------------+------------------+----------------+
+| 06            | 吴兰              | 1992-03-01       | 女              |
+| 08            | 王菊              | 1990-01-20       | 女              |
+| 11            | 关羽              | 1990-01-25       | 男              |
++---------------+-----------------+------------------+----------------+
+查询学过编号为"01"并且也学过编号为"02"的课程的同学的信息
+0: jdbc:hive2://bigdata03:10000> select * from student where s_id in (select t.sid from (select DISTINCT s_id sid FROM score where c_id =01) t,(select DISTINCT s_id sid FROM score where c_id =02) t1 where t.sid = t1.sid);
++---------------+-----------------+------------------+----------------+
+| student.s_id  | student.s_name  | student.s_birth  | student.s_sex  |
++---------------+-----------------+------------------+----------------+
+| 01            | 赵雷              | 1990-01-01       | 男              |
+| 02            | 钱电              | 1990-12-21       | 男              |
+| 03            | 孙风              | 1990-05-20       | 男              |
+| 04            | 李云              | 1990-08-06       | 男              |
+| 05            | 周梅              | 1991-12-01       | 女              |
+| 09            | 张飞              | 1990-9-25        | 男              |
+| 10            | 刘备              | 1990-01-25       | 男              |
++---------------+-----------------+------------------+----------------+
+查询学过编号为"01"但是没有学过编号为"02"的课程的同学的信息
+0: jdbc:hive2://bigdata03:10000> select * from student s, (select DISTINCT s_id sid FROM score where c_id =01 and s_id not in (select DISTINCT s_id sid FROM score where c_id =02)) t where s.s_id = t.sid;
++---------+-----------+-------------+----------+--------+
+| s.s_id  | s.s_name  |  s.s_birth  | s.s_sex  | t.sid  |
++---------+-----------+-------------+----------+--------+
+| 06      | 吴兰        | 1992-03-01  | 女        | 06     |
++---------+-----------+-------------+----------+--------+
+查询没有学全所有课程的同学的信息
+0: jdbc:hive2://bigdata03:10000> select * from student where s_id in(select t.sid from (select s_id sid, count(DISTINCT c_id) s_count from score group by s_id) t, (select count(1) acount from course) c where t.s_count != c.acount);
++---------------+-----------------+------------------+----------------+
+| student.s_id  | student.s_name  | student.s_birth  | student.s_sex  |
++---------------+-----------------+------------------+----------------+
+| 01            | 赵雷              | 1990-01-01       | 男              |
+| 02            | 钱电              | 1990-12-21       | 男              |
+| 03            | 孙风              | 1990-05-20       | 男              |
+| 04            | 李云              | 1990-08-06       | 男              |
+| 05            | 周梅              | 1991-12-01       | 女              |
+| 06            | 吴兰              | 1992-03-01       | 女              |
+| 07            | 郑竹              | 1989-07-01       | 女              |
+| 09            | 张飞              | 1990-9-25        | 男              |
+| 11            | 关羽              | 1990-01-25       | 男              |
++---------------+-----------------+------------------+----------------+
+查询至少有一门课与学号为"01"的同学所学相同的同学的信息
+0: jdbc:hive2://bigdata03:10000> select s.* from student s right join (select DISTINCT s_id sid from score where c_id in (select DISTINCT c_id from score where s_id=01)) t on s.s_id = t.sid;
++---------+-----------+-------------+----------+
+| s.s_id  | s.s_name  |  s.s_birth  | s.s_sex  |
++---------+-----------+-------------+----------+
+| 01      | 赵雷        | 1990-01-01  | 男        |
+| 02      | 钱电        | 1990-12-21  | 男        |
+| 03      | 孙风        | 1990-05-20  | 男        |
+| 04      | 李云        | 1990-08-06  | 男        |
+| 05      | 周梅        | 1991-12-01  | 女        |
+| 06      | 吴兰        | 1992-03-01  | 女        |
+| 07      | 郑竹        | 1989-07-01  | 女        |
+| 09      | 张飞        | 1990-9-25   | 男        |
+| 10      | 刘备        | 1990-01-25  | 男        |
++---------+-----------+-------------+----------+
+查询和"01"号的同学学习的课程完全相同的其他同学的信息
+0: jdbc:hive2://bigdata03:10000> select s.* from (select t.sid sid from (select concat_ws('|',COLLECT_SET(c_id)) c1, s_id sid from score group by s_id) t, (select concat_ws('|',COLLECT_SET(c_id)) c2 from score where s_id=01) t1 where t1.c2=t.c1) s1 LEFT JOIN student s on s1.sid = s.s_id;
++---------+-----------+-------------+----------+
+| s.s_id  | s.s_name  |  s.s_birth  | s.s_sex  |
++---------+-----------+-------------+----------+
+| 01      | 赵雷        | 1990-01-01  | 男        |
+| 02      | 钱电        | 1990-12-21  | 男        |
+| 03      | 孙风        | 1990-05-20  | 男        |
+| 04      | 李云        | 1990-08-06  | 男        |
++---------+-----------+-------------+----------+
+查询没学过"张三"老师讲授的任一门课程的学生姓名
+0: jdbc:hive2://bigdata03:10000> select t.* from (select DISTINCT s_id sid from score where c_id not in (select c_id from course where t_id = (select t_id from teacher where t_name ='张三'))tmp left join student t on tmp.sid = t.s_id;
++---------+-----------+-------------+----------+
+| t.s_id  | t.s_name  |  t.s_birth  | t.s_sex  |
++---------+-----------+-------------+----------+
+| 01      | 赵雷        | 1990-01-01  | 男        |
+| 02      | 钱电        | 1990-12-21  | 男        |
+| 03      | 孙风        | 1990-05-20  | 男        |
+| 04      | 李云        | 1990-08-06  | 男        |
+| 05      | 周梅        | 1991-12-01  | 女        |
+| 06      | 吴兰        | 1992-03-01  | 女        |
+| 07      | 郑竹        | 1989-07-01  | 女        |
+| 09      | 张飞        | 1990-9-25   | 男        |
+| 10      | 刘备        | 1990-01-25  | 男        |
+| 11      | 关羽        | 1990-01-25  | 男        |
++---------+-----------+-------------+----------+
+查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
+0: jdbc:hive2://bigdata03:10000> select t.s_name, t3.sid, t3.avg1 from (select t1.coun, t1.sid, t2.avg1 from (select count(s_id) coun , s_id sid from score where s_score < 60  GROUP BY s_id) t1 left join (select s_id sid, avg(s_score) avg1 from score GROUP BY s_id) t2 on t1.sid = t2.sid where t1.coun >=2) t3 left join student t on t3.sid = t.s_id;
++-----------+---------+---------------------+
+| t.s_name  | t3.sid  |       t3.avg1       |
++-----------+---------+---------------------+
+| 李云        | 04      | 33.333333333333336  |
+| 吴兰        | 06      | 32.5                |
+| 刘备        | 10      | 64.0                |
++-----------+---------+---------------------+
