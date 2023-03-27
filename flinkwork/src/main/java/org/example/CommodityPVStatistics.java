@@ -39,8 +39,7 @@ public class CommodityPVStatistics {
             return TempBehaviorData.builder().userId(strings[0]).itemId(strings[1]).categoryId(strings[2]).behavior(strings[3]).timestamp(Long.valueOf(strings[4])).build();
         }).assignTimestampsAndWatermarks(behaviorDataWatermarkStrategy);
         Table table = tableEnvironment.fromDataStream(dataStream, $("userId"), $("itemId"), $("categoryId"), $("behavior"), $("timestamp"), $("swEnvTime").rowtime());
-        Table tableQuery = tableEnvironment.sqlQuery("select count(itemId), itemId , HOP_START(swEnvTime,INTERVAL '5' minute,INTERVAL '1' hour) as winstart " +
-                "from " + table + " where behavior='pv' GROUP BY itemId,HOP(swEnvTime,INTERVAL '5' minute,INTERVAL '1' hour) ");
+        Table tableQuery = tableEnvironment.sqlQuery("select * from ( select *, ROW_NUMBER() OVER ( PARTITION BY winstart, winend ORDER BY itemId desc ) as rownum from ( select count(url), winstart, winsend, count(itemId), itemId , HOP_START(swEnvTime,INTERVAL '5' minute,INTERVAL '1' hour) as winstart from " + table + " where behavior='pv' GROUP BY itemId,HOP(swEnvTime,INTERVAL '5' minute,INTERVAL '1' hour) ) ) where rownum <= 3");
         tableQuery.execute().print();
     }
 }

@@ -36,8 +36,7 @@ public class PageViewStatistics {
             return TempLogData.builder().ip(split[0]).userId(split[1]).eventTime(Long.valueOf(split[2])).method(split[3]).url(split[4]).build();
         }).assignTimestampsAndWatermarks(logDataWatermarkStrategy);
         Table table = streamTableEnvironment.fromDataStream(dataStream, $("ip"), $("userIid"), $("eventTime"), $("method"), $("url"), $("swEnvTime").rowtime());
-        Table tableQuery = streamTableEnvironment.sqlQuery("select count(url), url , HOP_START(swEnvTime,INTERVAL '5' second,INTERVAL '10' minute) as winstart " +
-                "from " + table + " GROUP BY url,HOP(swEnvTime,INTERVAL '5' second,INTERVAL '10' minute) ");
+        Table tableQuery = streamTableEnvironment.sqlQuery("select * from ( select *, ROW_NUMBER() OVER ( PARTITION BY winstart, winend ORDER BY url desc ) as rownum from ( select count(url), winstart, winsend, url, HOP_START( swEnvTime, INTERVAL '5' second, INTERVAL '10' minute ) as winstart from " + table + " GROUP BY winstart, winsend, url, HOP( swEnvTime, INTERVAL '5' second, INTERVAL '10' minute ) ) ) where rownum <= 3");
 
         tableQuery.execute().print();
 
